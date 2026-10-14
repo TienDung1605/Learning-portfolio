@@ -168,3 +168,77 @@ Bài 1: HIểu dữ liệu dạng bảng và câu lệnh `SELECT`.
        Viết một câu giải thích ngắn:
          Trong công việc thương mại điện tử, câu lệnh `ORDER BY revenue DESC` có thể giúp tôi làm gì?
          Trong công việc thương mại điện tử, câu lệnh `ORDER BY revenue DESC` có thể sắp xếp doanh thu từ cao xuống thấp, từ đó nhanh chóng xác định sản phẩm bán tốt hoặc đơn hàng có giá trị cao để ưu tiên phân tích và hành động kinh doanh
+
+
+Bài 2: Lọc dữ liệu bằng WHERE
+ - WHERE dùng để chỉ lấy những dòng thỏa màn một điều kiện
+
+ - Ví dụ 1: Lọc theo kênh bán hàng
+    SELECT *
+    FROM orders
+    WHERE channel = 'Website'
+- Ý nghĩa:
+   Chỉ hiển thị các đơn hàng đến từ kênh Website
+- Chuỗi chữ như 'Website' cần đặt trong dấu nháy đơn
+
+- Ví dụ 2: Lọc đơn hàng có doanh thu lớn hơn 400000
+   SELECT order_id, product_name, revenue
+   FROM orders
+   WHERE revenue > 400000
+
+- Các toán tử thường dùng
+  | Toán tử | Ý nghĩa              |
+  | =       | bằng                 |
+  | >       | lớn hơn              |
+  | <       | nhỏ hơn              |
+  | >=      | Lớn hơn hoặc bằng    |
+  | <=      | nhỏ hơn hoặc bằng    |
+  | <>      | khác                 |
+
+- Kết hợp WHERE và ORDER BY
+   SELECT order_id, product_name, channel, revenue
+   FROM orderes
+   WHERE channel = 'Website'
+   ORDER BY revenue DESC;
+
+- Cách đọc:
+   Lấy các đơn hàng từ Website và sắp xếp theo doanh thu giảm dần
+
+- Thứ tự viết câu lệnh là:
+  SELECT
+  FROM
+  WHERE
+  ORDER BY
+- Không viết ORDER BY trước WHERE
+
+BÀI TẬP MỚI
+ Dùng bảng orders giống bài trước
+ Bài 6: Hiển thị tất cả đơn hàng đến từ kênh Website
+  SELECT *
+  FROM orders
+  WHERE channel = 'Website';
+  
+ Bài 7: Hiển thị mã đơn hàng, tên sản phẩm và doanh thu của các đơn hàng có doanh thu lớn hơn 400000
+  SELECT order_id, product_name, revenue
+  FROM orders
+  WHERE revenue > 400000;
+  
+ Bài 8: Hiển thị các đơn hàng có số lượng từ 2 trở lên, sắp xếp số lượng từ cao xuống thấp
+  SELECT *
+  FROM orders
+  WHERE quantity >= 2
+  ORDER BY quantity DESC;
+  
+ Bài 9: Hiển thị mã đơn hàng, sản phẩm và doanh thu của các đơn hàng từ kênh Website, sắp xếp doanh thu giảm dần
+  SELECT order_id, product_name, revenue
+  FROM orders
+  WHERE channel = 'Website'
+  ORDER BY revenue DESC
+  
+ Bài 10: Giải thích bằng lời câu SQL sau:
+   SELECT product_name, revenue
+   FROM orders
+   WHERE revenue >= 450000
+   ORDER BY revenue DESC;
+   ORDER BY revenue DESC;
+Lấy tên các sản phẩm và doanh thu của những đơn hàng có doanh thu lớn hơn hoặc bằng 450000, sau đó sắp xếp các kết quả rtheo doanh thu từ cao xuống thấp
