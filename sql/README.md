@@ -472,3 +472,135 @@ IV. Bài 4: Các hàm tổng hợp cơ bản
          SUM(revenue) AS total_revenue
       FROM orders
       GROUP BY channel, product_name
+
+7. Sắp xếp kết quả nhóm
+   - Muốn xem kênh có tổng doanh thu cao nhất trước:
+     SELECT
+        channel,
+        SUM(revenue) AS total_revenue
+     FROM orders
+     GROUP BY channel
+     ORDER BY total_revenue DESC
+   - Có thể dùng bí danh total_revenue trong ORDER BY
+   - Câu này trả lời:
+        Kênh bán hàng nào đang tạo ra nhiều doanh thu nhất?
+
+8. Kết hợp WHERE với GROUP BY
+   - Ví dụ: chỉ tính doanh thu của các đơn hàng từ Website:
+     SELECT
+        channel,
+        SUM(revenue) AS total_revenue
+     FROM orders
+     WHERE channel = 'Website'
+     GROUP BY channel;
+
+   - Thứ tự câu lệnh
+     SELECT
+     FROM
+     WHERE
+     GROUP BY
+     ORDER BY
+
+   - Cách hoạt động:
+     1. FROM: lấy dữ liệu từ orders
+     2. WHERE: lọc những dòng cần thiết
+     3. GROUP BY: gom các dòng thành nhóm
+     4. SELECT: Tính và hiển thị kết quả
+     5. ORDER BY: sắp xếp kết quả
+    
+9. Phân biệt COUNT(*) và COUNT(DISTINCT ...)
+    - Nếu bảng có nhiều dòng cho cùng một đơn hàng, COUNT(*) có thể không đại diện cho số đơn hàng duy nhất
+    - Ví dụ:
+         SELECT COUNT(*) AS total_rows
+         FROM orders;
+
+   - Đếm số dòng
+   - Nếu muốn đếm số mã đơn hàng khác nhau:
+     SELECT COUNT(DISTINCT order_id) AS unique_orders
+     FROM orders;
+      + DISTINCT loại bỏ giá trị trùng lặp
+   =>  Trong dữ liệu đơn giản, mỗi dòng là một đơn hàng thì hai cách có thể cho cùng kết quả. Nhưng trong dữ liệu thực tế, cần hiểu cấu trúc bảng trước khi kết luận
+
+10. Bài tập
+    Hãy dùng bảng orders mẫu để làm các bài sau
+    1. Bài 16: Tính tổng doanh thu của toàn bộ bảng
+      SELECT
+         revenue
+         SUM(revenue) AS total_revenue,
+      FROM orders;
+      
+    3. Bài 17: Đếm tổng số dòng hoặc số đơn hàng trong bảng
+     - Đếm số dòng
+      SELECT COUNT(*) AS total_rows
+       FROM orders;
+
+     - Đếm số đơn hàng trong bảng
+          SELECT COUNT(order_id) AS total_orders
+          FROM orders;
+       
+    4. Bài 18: Tính tổng số lượng sản phẩm đã bán
+      SELECT SUM(quantity) AS total_quantity
+      FROM orders;
+
+    6. Bài 19: Tính doanh thu theo từng kênh bán hàng
+       Kết quả cần có:
+        + Tên kênh
+        + Tổng doanh thu
+      
+         SELECT
+            channel,
+            SUM(revenue) AS total_revenue
+         FROM orders
+         GROUP BY channel;
+      
+    8. Bài 20: Đếm số đơn hàng theo từng kênh bán hàng
+       Kết quả cần có:
+        + Tên kênh
+        + Đơn hàng
+      
+         SELECT
+            channel,
+            COUNT(*) AS total_orders
+         FROM orders;
+      
+    10. Bài 21: Tính các chỉ số sau theo từng kênh:
+       + Số đơn hàng
+       + Tổng số lượng sản phẩm
+       + Tổng doanh thu
+       + Doanh thu trung bình
+   
+         SELECT
+            channel,
+            COUNT(*) AS total_orders,
+            SUM(quantity) AS total_quantity,
+            SUM(revenue) AS total_revenue,
+            AVG(revenue) AS total_revenue
+         FROM orders
+         GROUP BY channel;
+      
+    11. Bài 22: Hiển thị các kênh bán hàng theo thứ tự tổng doanh thu từ cao xuống thấp
+      SELECT
+        channel,
+        SUM(revenue) AS total_revenue,
+      FROM orders
+      GROUP BY channel
+      ORDER BY total_revenue DESC;
+
+    13. Bài 23: Suy nghĩ nghiệp vụ
+       Giải thích câu SQL sau bằng lời:
+          SELECT
+             channel,
+             COUNT(*) AS total_orders,
+             SUM(revenue) AS total_revenue
+          FROM orders
+          GROUP BY channel
+          ORDER BY total_revenue DESC
+
+        - Nhóm các đơn hàng theo từng kênh bán hàng, đếm số đơn hàng tính tổng doanh thu của mỗi kênh. Sau đó sắp xếp các kênh theo tổng doanh thu từ cao xuống thấp
+
+    15. Bài 24: Phát hiện lỗi
+        Câu SQL sau có vấn đề gì?
+          SELECT channel, product_name, SUM(revenue) AS total_revenue
+          FROM orders
+          GROUP BY channel;
+        - product_name không nằm trong GROUP BY
