@@ -598,9 +598,51 @@ IV. Bài 4: Các hàm tổng hợp cơ bản
 
         - Nhóm các đơn hàng theo từng kênh bán hàng, đếm số đơn hàng tính tổng doanh thu của mỗi kênh. Sau đó sắp xếp các kênh theo tổng doanh thu từ cao xuống thấp
 
-    15. Bài 24: Phát hiện lỗi
+    14. Bài 24: Phát hiện lỗi
         Câu SQL sau có vấn đề gì?
           SELECT channel, product_name, SUM(revenue) AS total_revenue
           FROM orders
           GROUP BY channel;
         - product_name không nằm trong GROUP BY
+       
+11. Bài làm thêm
+     1. Bài 1: Viết câu SQL tính tổng số lượng sản phẩm theo từng sản phẩm, sắp xếp từ nhiều đến ít
+         SELECT
+             product_name,
+             SUM(quantity) AS total_quantity
+         FROM orders
+         GROUP BY product_name
+         ORDER BY total_quantity DESC;
+
+     2. Bài 2: Viết câu SQL đếm số đơn hàng theo từng kênh, sắp xếp từ nhiều đến ít
+         SELECT
+            channel,
+            COUNT(*) AS total_order
+         FROM orders
+         GROUP BY channel
+         ORDER BY total_order DESC;
+     3. Bài 3: Viết câu SQL tính tổng doanh thu theo từng kênh, sắp xếp từ thấp đến cao
+         SELECT
+             channel,
+             SUM(revenue) AS total_revenue
+         FROM orders
+         GROUP BY channel
+         ORDER BY total_revenue ASC;
+
+     4. Bài 4: Câu lệnh sau làm gì?
+        SELECT
+          product_name,
+          AVG(revenue) AS average_revenue
+        FROM orders
+        GROUP BY product_name
+        ORDER BY average_revenue DESC;
+          - Câu lệnh này tính doanh thu trung bình của từng sản phẩm, sau đó sắp xếp theo thứ tự giảm dần
+    
+     5. Bài 5: Trong câu sau, phần nào là GROUP BY, phần nào là ORDER BY
+        SELECT
+           channel,
+           SUM(revenue) AS total_revenue
+        FROM orders
+        GROUP BY channel
+        ORDER BY total_revenue DESC
+          - GROUP BY channel dùng để gom dữ liệu theo từng kênh bán hàng. SUM(revenue) tính tổng doanh thu của mỗi kênh. ORDER BY total_revenue DESC sắp xếp các kênh theo tổng doanh thu giảm dần
