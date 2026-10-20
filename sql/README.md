@@ -646,3 +646,279 @@ IV. Bài 4: Các hàm tổng hợp cơ bản
         GROUP BY channel
         ORDER BY total_revenue DESC
           - GROUP BY channel dùng để gom dữ liệu theo từng kênh bán hàng. SUM(revenue) tính tổng doanh thu của mỗi kênh. ORDER BY total_revenue DESC sắp xếp các kênh theo tổng doanh thu giảm dần
+
+V. HAVING - câu lệnh dùng để lọc kết quả sau khi đã GROUP BY
+   1. Nhắc lại sự khác nhau giữa WHERE và HAVING
+      - WHERE
+         + WHERE lọc các dòng dữ liệu ban đầu, trước khi nhóm
+         + Ví dụ:
+             SELECT *
+             FROM order
+             WHERE channel = 'Website';
+         + Ý nghĩa: Chỉ lấy các đơn hàng từ Website
+       
+      - HAVING
+         + HAVING lọc các nhóm sau khi đã tổng hợp
+         + Ví dụ:
+              SELECT
+                 channel,
+                 SUM(revenue) AS total_revenue
+              FROM orders
+              GROUP BY channel
+              HAVING SUM (revenue) > 1000000;
+        + Ý nghĩa: Gom dữ liệu theo kênh, tính tổng doanh thu, rồi chỉ giữ lại những kênh có tổng doanh thu lớn hơn 1000000
+       
+   2. Vì sao không dùng WHERE để lọc tổng doanh thu ?
+      - Câu sau thường sai:
+           SELECT
+              channel,
+              SUM(revenue) AS total_revenue
+           FROM orders
+           WHERE total_revenue > 1000000
+           GROUP BY channel;
+        + Lý do: total_revenue là kết quả được tạo ra sau khi GROUP BY và SUM() thực hiện. Ở bước WHERE, kết quả này chưa tồn tại
+        + Khi điều kiện liên quan đến:
+          • SUM()
+          • COUNT()
+          • AVG()
+          • MIN()
+          • MAX()
+          thường phải dùng HAVING
+
+   3. Ví dụ đơn giản
+      - Giả sử kết quả tổng doanh thu theo kênh là:
+        | channel     | total_revenue  |
+        | Website     |         950000 |
+        | Shopee      |        1700000 |
+        | TikTok Shop |         450000 |
+
+      - Muốn chỉ xem các kênh có doanh thu trên 1000000:
+        SELECT
+           channel,
+           SUM(revenue) AS total_revenue
+        FROM orders
+        GROUP BY channel
+        HAVING SUM(revenue) > 1000000;
+         + Kết quả:
+           | channel | total_revenue  |
+           | Shopee  |        1700000 |
+
+   4. Lọc theo số lượng đơn hàng
+      SELECT
+         channel,
+         COUNT(*) AS total_orders
+      FROM orders
+      GROUP BY channel
+      HAVING COUNT(*) >= 2;
+      - Ý nghĩa: Chỉ hiển thị những kênh có ít nhất 2 đơn hàng
+     
+      - Bạn cũng có thể dùng bí danh:
+        SELECT
+           channel,
+           COUNT(*) AS total_orders
+        FROM orders
+        GROUP BY channel
+        HAVING total_orders >= 2;
+
+      - Tuy nhiên, khả năng dùng bí danh trong HAVING có thể khác nhau tùy hệ quản trị cơ sơ dữ liệu. Cách an toàn và phổ biến là viết lại hàm
+        HAVING COUNT(*) >= 2
+
+   5. Kết hợp WHERE, GROUP BY, HAVING và ORDER BY
+      - Ví dụ:
+        + Trong các đơn hàng từ Website, tìm những sản phẩm có tổng doanh thu ít nhất 400000 và sắp xếp giảm dần
+          SELECT
+             product_name,
+             SUM(revenue) AS total_revenue
+          FROM orders
+          WHERE channel = 'Website'
+          GROUP BY product_name
+          HAVING SUM(revenue) >= 400000
+          ORDER BY total_revenue DESC;
+
+      + Câu lệnh này thực hiện theo thứ tự:
+        1. FROM orders: lấy dữ liệu từ bảng orders
+        2. WHERE channel = 'Website': chỉ giữ đơn hàng Website
+        3. GROUP BY product_name: gom theo sản phẩm
+        4. SUM(revenue): tính tổng doanh thu từng sản phẩm
+        5. HAVING SUM(revenue) >= 400000: chỉ giữ sản phẩm đạt ngưỡng
+        6. ORDER BY total_revenue DESC: sắp xếp doanh thu giảm dần
+       
+   6. So sánh trực tiếp WHERE và HAVING
+      - Lọc dòng trước khi nhóm
+        SELECT
+           channel,
+           SUM(revenue) AS total_revenue
+        FROM orders
+        WHERE revenue >= 400000
+        GROUP BY channel;
+        + Ý nghĩa: Chỉ lấy những dòng đơn hàng có doanh thu từ 400000 trở lên, sau đó tính tổng theo kênh
+       
+      - Lọc nhóm sau khi nhóm
+        SELECT
+           channel,
+           SUM(revenue) AS total_revenue
+        FROM orders
+        GROUP BY channel
+        HAVING SUM(revenue) >= 400000
+        + Ý nghĩa: Tính tổng doanh thu của từng kênh, sau đó chỉ giữ các kênh có tổng doanh thu từ 400000 trở lên
+     => Hai câu lệnh này không giống nhau
+        + WHERE revenue >= 400000: lọc từng đơn hàng
+        + HAVING SUM(revenue) >= 400000: lọc tổng doanh thu của từng kênh
+       
+   7. Ví dụ để thấy sự khác biệt
+      - Dữ liệu:
+         | channel | revenue |
+         | Website |  300000 |
+         | Website |  450000 |
+         | Website |  200000 |
+         | Shopee  |  800000 |
+         | Shopee  |  900000 |
+     - Trường hợp dùng WHERE
+        SELECT
+           channel,
+           SUM(revenue) AS total_revenue
+        FROM orders
+        WHERE revenue >= 400000
+        GROUP BY channel;
+
+        + SQL loại bỏ các dòng 300000 và 200000 trước, rồi tính:
+          | channel | total_revenue  |
+          | Website |         450000 |
+          | Shopee  |        1700000 |
+     - Trường hợp dùng HAVING
+          SELECT
+             channel,
+             sum(revenue) AS total_revenue
+          FROM orders
+          GROUP BY channel
+          HAVING SUM(revenue) >= 400000;
+       + SQL tính tổng đầy đủ trước:
+         | channel | total_revenue  |
+         | Website |         950000 |
+         | Shopee  |        1700000 |
+       -> Sau đó lọc nhóm. Cả hai kênh đều được giữ lại
+
+   8. Điều kiện trong HAVING
+      - Bạn có thể dùng các toán tử quen thuộc:
+        + HAVING SUM(revenue) > 1000000;
+        + HAVING COUNT(*) >= 5;
+        + HAVING AVG(revenue) < 500000;
+       
+      - Có thể kết hợp nhiều điều kiện
+        SELECT
+           channel,
+           COUNT(*) AS total_orders,
+           SUM(revenue) AS total_revenue
+        FROM orders
+        GROUP BY channel
+        HAVING COUNT(*) >= 2
+           AND SUM(revenue) >= 1000000;
+        
+        + Ý nghĩa: Chỉ lấy các kênh vừa có ít nhất 2 đơn hàng, vừa có tổng doanh thu từ 1000000 trở lên
+       
+   9. Thứ tự chuẩn của câu SQL
+       - Khi viết câu lệnh, thứ tự là:
+         SELECT
+         FROM
+         WHERE
+         GROUP BY
+         HAVING
+         ORDER BY;
+
+       - Ví dụ đầy đủ:
+         SELECT
+            channel,
+            COUNT(*) AS total_orders
+            SUM(revenue) AS total_revenue
+         FROM orders
+         WHERE order_date >= '2026-10-01'
+         GROUP BY channel
+         HAVING SUM(revenue) >= 500000
+         ORDER BY total_revenue DESC
+         + Cách đọc:
+            Lọc các đơn hàng từ ngày 01/10/2026, gom theo kênh, chỉ giữ các kênh có tổng doanh thu từ 500000 trở lên, rồi sắp xếp tổng doanh thu giảm dần
+
+   10. Bảng ghi nhớ nhanh
+       | Câu lệnh                        | Lọc cái gì?             | Thời điểm        |
+       | ------------------------------- | ----------------------- | ---------------- |
+       | `WHERE revenue > 400000`        | Từng dòng đơn hàng      | Trước `GROUP BY` |
+       | `GROUP BY channel`              | Gom các dòng thành nhóm | Sau `WHERE`      |
+       | `HAVING SUM(revenue) > 1000000` | Các nhóm đã tổng hợp    | Sau `GROUP BY`   |
+       | `ORDER BY total_revenue DESC`   | Sắp xếp kết quả         | Cuối cùng        |
+
+       - Câu ghi nhớ:
+          WHERE lọc dòng, HAVING lọc nhóm
+
+
+   11. Bài tập
+       Dùng bảng orders hiện tại
+       1. Bài 25: Tính tổng doanh thu theo từng kênh, chỉ hiển thị các kênh có tổng doanh thu lớn hơn 700000
+           SELECT
+             channel,
+             SUM(revenue) AS total_revenue
+           FROM orders
+           GROUP BY channel
+           HAVING SUM(revenue) > 700000;      
+
+       3. Bài 26: Đếm số đơn hàng theo từng kênh, chỉ hiển thị các kênh có ít nhất 2 đơn hàng
+           SELECT
+              channel,
+              COUNT(*) AS total_orders
+           FROM orders
+           GROUP BY channel
+           HAVING COUNT(*) >= 2;
+
+       5. Bài 27: Tính tổng số lượng sản phẩm theo từng sản phẩm, chỉ hiển thị sản phẩm có tổng số lượng từ 3 trở lên
+          SELECT
+             product_name,
+             SUM(quantity) AS total_quantity
+          FROM orders
+          GROUP BY product_name
+          HAVING SUM(quantity) >= 3
+          
+
+       7. Bài 28: Tính tổng doanh thu theo từng sản phẩm, sắp xếp từ cao xuống thấp và chỉ hiển thị sản phẩm có tổng doanh thu ít nhất 500000
+          SELECT
+             product_name,
+             SUM(revenue) AS total_revenue
+          FROM orders
+          GROUP BY product_name
+          HAVING SUM(revenue) >= 500000
+          ORDER BY total_revenue DESC
+
+       9. Bài 29:
+          - Giải thích sự khác nhau giữa hai câu SQL:
+            SELECT
+               channel,
+               SUM(revenue) AS total_revenue
+            FROM orders
+            WHERE revenue >= 400000
+            GROUP BY channel;
+             - Chỉ giữ lại những dòng đơn hàng có doanh thu từ 400000 trở lên. Sau đó gom các dòng lại theo kênh và tính tổng doanh thu theo từng kênh
+
+          - Và
+            SELECT
+               channel,
+               SUM(revenue) AS total_revenue
+            FROM orders
+            GROUP BY channel
+            HAVING SUM(revenue) >= 400000
+             - Gom toàn bộ đơn hàng theo từng kênh, tính tổng doanh thu của mỗi kênh, rồi chỉ hiển thị những kênh có tổng doanh thu từ 400000 trở lên
+            
+   6. Bài 30: Phát hiện lỗi trong câu SQL sau:
+          SELECT
+             channel,
+             SUM(revenue) AS total_revenue
+          FROM orders
+          WHERE SUM(revenue) >= 1000000
+          GROUP BY channel;
+            - Không dùng WHERE với SUM(total_revenue)
+                + Vì SUM(revenue) là kết quả sau khi nhóm dữ liệu, nên phải dùng HAVING
+            - Viết lại
+              SELECT
+                 channel,
+                 SUM(revenue) AS total_revenue
+              FROM orders
+              GROUP BY channel
+              HAVING SUM(revenue) >= 1000000
+               + Gom đơn hàng theo từng kênh, tính tổng doanh thu mỗi kênh, rồi chỉ hiển thị những kênh có tổng doanh thu từ 1000000 trở lên
