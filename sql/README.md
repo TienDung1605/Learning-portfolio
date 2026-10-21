@@ -922,3 +922,281 @@ V. HAVING - câu lệnh dùng để lọc kết quả sau khi đã GROUP BY
               GROUP BY channel
               HAVING SUM(revenue) >= 1000000
                + Gom đơn hàng theo từng kênh, tính tổng doanh thu mỗi kênh, rồi chỉ hiển thị những kênh có tổng doanh thu từ 1000000 trở lên
+
+VI. CASE WHEN
+ 1. CASE WHEN là gì?
+  - Có thể hiểu đơn giản:
+      Nếu điều kiện đúng thì trả về kết quả A, nếu không thì kiểm tra điều kiện tiếp theo
+  - Cấu trúc cơ bản:
+    CASE
+       WHEN điều_kiện_1 THEN kết_quả_1
+       WHEN điều_kiện_2 THEN kết_quả_2
+       ELSE kết_quả_khác
+    END
+
+  - Ví dụ:
+    CASE
+      WHEN revenue >= 700000 THEN 'Đơn lớn'
+      WHEN revenue >= 400000 THEN 'Đơn vừa'
+      ELSE 'Đơn nhỏ'
+    END
+
+  - Câu lệnh này phân loại doanh thu thành ba nhóm:
+    | Điều kiện           | Kết quả |
+    | `revenue >= 700000` | Đơn lớn |
+    | `revenue >= 400000` | Đơn vừa |
+    | Còn lại             | Đơn nhỏ |
+
+ 2. Dùng CASE WHEN trong SELECT
+    SELECT
+       order_id
+       product_name,
+       revenue,
+       CASE
+          WHEN revenue >= 700000 THEN 'Đơn lớn'
+          WHEN revenue >= 400000 THEN 'Đơn vừa'
+          ELSE 'Đơn nhỏ'
+       END AS order_segment
+   FROM orders;
+
+ -  Kết quả có thể như sau:
+   | order_id | product_name | revenue | order_segment |
+   |      1001 | Áo thun       |  300000 | Đơn nhỏ        |
+   |      1002 | Giày thể thao |  800000 | Đơn lớn        |
+   |      1003 | Túi xách      |  450000 | Đơn vừa        |
+   |      1004 | Áo thun       |  450000 | Đơn vừa        |
+     + order_segment là tên của cột mới được tạo ra
+  
+ 3. Ý nghĩa của ELSE
+    - ELSE là kết quả mặc định nếu không có điều kiện WHEN nào đúng
+    - Ví dụ:
+      CASE
+         WHEN revenue >= 700000 THEN 'Đơn lớn'
+         WHEN revenue >= 400000 THEN 'Đơn vừa'
+         ELSE 'Đơn nhỏ'
+      END AS order_segment
+
+    - Nếu doanh thu là 300000, không điều kiện nào ở trên đúng, nên kết quả là: đơn nhỏ
+    - Nếu bỏ ELSE:
+      CASE
+         WHEN revenue >= 700000 THEN 'Đơn lớn'
+         WHEN revenue >= 400000 THEN 'Đơn vừa'
+      END AS order_segment
+      + Những dòng không thỏa mãn điều kiện sẽ có kết quaer NULL
+      + Thông thường, nên dùng ELSE để tránh giá trị trống không mong muốn
+     
+ 4. Thứ tự của các điều kiện rất quan trọng
+    - Hãy xem câu này:
+      CASE
+         WHEN revenue >= 400000 THEN 'Đơn vừa'
+         WHEN revenue >= 700000 THEN 'Đơn lớn'
+         ELSE 'Đơn nhỏ'
+      END
+
+    -  Câu này có lỗi logic
+    -  Vì đơn hàng có doanh thu 800000 cũng thỏa mãn điều kiện đầu tiên
+        revenue >= 400000
+    - SQL sẽ dừng ngay ở điều kiện đầu tiên và gán là Đơn vừa. Nó không đi tiếp để kiểm tra revenue >= 700000
+   
+    - Cách đúng
+      + Đặt điều kiện cụ thể hoặc mức cao hơn trước:
+        CASE
+           WHEN revenue >= 700000 THEN 'Đơn lớn'
+           WHEN revenue >= 400000 THEN 'Đơn vừa'
+           ELSE 'Đơn nhỏ'
+        END
+
+    - Câu ghi nhớ
+      CASE WHEN kiểm tra từ trên xuống dưới và dừng ở điều kiện đúng đầu tiên
+
+ 5. CASE WHEN với số lượng
+    SELECT
+       order_id,
+       product_name,
+       quantity,
+       CASE
+          WHEN quantity >= 3 THEN 'Số lượng cao'
+          WHEN quantity >= 2 THEN 'Số lượng vừa'
+          ELSE 'Số lượng thấp'
+       END AS quantity_segment
+    FROM orders
+
+    - Cách phân loại:
+      + Từ 3 sản phẩm trở lên: Số lượng cao
+      + Từ 2 đến dưới 3: Số lượng vừa
+      + Dưới 2: Số lượng thấp
+     
+ 6. CASE WHEN với kênh bán hàng
+    - Bạn cũng có thể phân loại theo giá trị chữ:
+      SELECT
+         order_id,
+         channel,
+         CASE
+            WHEN channel = 'Website' THEN 'Kênh sở hữu'
+            WHEN channel = 'Shopee' THEN 'Sàn thương mại điện tử'
+            ELSE 'Kênh khác'
+         END AS channel_group
+      FROM orders
+
+    - Kết quả:
+      | channel     | channel_group          |
+      | Website     | Kênh sở hữu            |
+      | Shopee      | Sàn thương mại điện tử |
+      | TikTok Shop | Kênh khác              |
+
+ 7. CASE WHEN kết hợp với SUM
+    - Bạn có thể dùng CASE WHEN bên trong SUM để tính tổng theo điều kiện
+    - Tính doanh thu từ các đơn lớn
+      SELECT
+         SUM(
+            CASE
+               WHEN revenue >= 700000 THEN revenue
+               ELSE 0
+            END
+         ) AS large_order_revenue
+      FROM orders
+
+   - Ý nghĩa:
+     + Nếu doanh thu của dòng đó từ 700000 trở lên, lấy doanh thu
+     + Nếu không, lấy không
+     + Sau đó cộng tất cả lại
+    
+   - Tính số đơn lớn
+     SELECT
+        SUM(
+           CASE
+              WHEN revenue >= 700000 THEN 1
+              ELSE 0
+           END
+        ) AS large_order_count
+     FROM orders;
+
+   - Cách hoạt động:
+     + Đơn lớn: gán 1
+     + Không phải đơn lớn: gán 0
+     + Tổng các số 1 chính là số đơn lớn
+    
+ 8. Phân loại rồi đếm số đơn theo nhóm
+    - Bạn có thể đặt CASE WHEN trong GROUP BY:
+      SELECT
+         CASE
+            WHEN revenue >= 700000 THEN 'Đơn lớn'
+            WHEN revenue >= 400000 THEN 'Đơn vừa'
+            ELSE 'Đơn nhỏ'
+         END AS order_segment,
+         COUNT(*) AS total_orders
+      FROM orders
+      GROUP BY
+         CASE
+            WHEN revenue >= 700000 THEN 'Đơn lớn'
+            WHEN revenue >= 400000 THEN 'Đơn vừa'
+            ELSE 'Đơn nhỏ'
+         END;
+
+   - Kết quả có thể là:
+     | order_segment | total_orders   |
+     | Đơn lớn        |             1 |
+     | Đơn vừa        |             2 |
+     | Đơn nhỏ        |             1 |
+
+   - Một số hệ quản trị cho phép dùng bí danh trong GROUP BY, nhưng viết lại toàn bộ CASE là cách tương thích mở rộng hơn
+
+ 9. Cách dùng CASE WHEN với GROUP BY
+     - Một cách dễ đọc hơn là tạo nhóm trước trong một truy vấn con
+       SELECT
+          order_segment,
+          COUNT(*) AS total_orders,
+          SUM(revenue) AS total_revenue
+       FROM(
+          SELECT
+             revenue,
+             CASE
+                WHEN revenue >= 700000 THEN 'Đơn lớn'
+                WHEN revenue >= 400000 THEN 'Đơn vừa'
+                ELSE 'Đơn nhỏ'
+             END AS order_segment
+          FROM orders
+       ) AS classified_orders
+       GROUP BY order_segment
+
+     - Ở đây:
+         + Truy vấn bên trong phân loại từng đơn hàng
+         + Truy vấn bên ngoài nhóm theo nhãn đã tạo
+         + Tính số đơn và doanh thu theo từng nhóm
+
+ 10. CASE WHEN khác WHERE như thế nào?
+     - WHERE loại bỏ dòng
+       SELECT *
+       FROM orders
+       WHERE revenue >= 700000;
+        -> Kết quả chỉ còn những đơn lớn. Cacs dòng khác biến mất khỏi kết quả
+
+     - CASE WHWEN giữ lại dòng và thêm nhãn
+       SELECT
+          order_id,
+          revenue,
+          CASE
+             WHEN revenue >= 700000 THEN 'Đơn lớn'
+             ELSE 'Không phải đơn lớn'
+          END AS order_type
+       FROM orders;
+        -> Tất cả các dòng vẫn còn, nhưng mỗi dòng được thêm một nhãn
+     - Ghi nhớ:
+          + WHERE dùng để lọc bỏ dữ liệu
+          + CASE WHEN dùng để phân loại hoặc tạo cột mới
+      
+ 11. CASE WHEN kết hợp với WHERE
+     SELECT
+        order_id,
+        product_name,
+        channel,
+        revenue,
+        CASE
+           WHEN revenue >= 700000 THEN 'Đơn lớn'
+           WHEN revenue >= 400000 THEN 'Đơn vừa'
+           ELSE 'Đơn nhỏ'
+        END AS order_segment
+     FROM orders
+     WHERE channel = 'Website'
+     - Ý nghĩa
+       1. Chỉ lấy các đơn hàng từ Website
+       2. Phân loại các đơn Website thành đơn lớn, vừa hoặc nhỏ
+      
+ 12. CASE WHEN kết hợp với HAVING
+     - Ví dụ: phân loại đơn hàng, nhóm theo kênh và chỉ hiển thị kệnh có ít nhất 2 đơn:
+       SELECT
+          channel,
+          COUNT(*) AS total_orders
+       FROM orders
+       GROUP BY channel
+       HAVING COUNT(*) >= 2
+     - Nếu muốn lọc theo điều kiện tổng hợp phức tạp hơn, vẫn dùng HAVING
+     - Điều quan trọng là phân biệt:
+       + Điều kiện trên từng dòng: WHERE
+       + Điều kiện tạo nhãn: CASE WHEN
+       + Điều kiện trên nhóm: HAVING
+      
+ 13. Ví dụ nghiệp vụ: đánh giá KPI
+     - Giả sử mục tiêu doanh thu của mỗi kênh là 1000000:
+       SELECT
+          channel,
+          SUM(revenue) AS total_revenue,
+          CASE
+             WHEN SUM(revenue) >= 1000000 THEN 'Đạt KPI'
+             ELSE 'Chưa đạt KPI'
+          END AS kpi_status
+       FROM orders
+       GROUP BY channel;
+
+     - Kết quả:
+       | channel     | total_revenue  | kpi_status   |
+       | Website     |         950000 | Chưa đạt KPI |
+       | Shopee      |        1700000 | Đạt KPI      |
+       | TikTok Shop |         450000 | Chưa đạt KPI |
+
+     - Ở đây:
+       CASE
+          WHEN SUM(revenue) >= 1000000 THEN 'Đạt KPI'
+          ELSE 'Chưa đạt KPI'
+       END
+       + Đang phân loại kết quả của từng nhóm, không phải doanh thu của từng dòng
