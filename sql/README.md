@@ -960,7 +960,7 @@ VI. CASE WHEN
    FROM orders;
 
  -  Kết quả có thể như sau:
-   | order_id | product_name | revenue | order_segment |
+   | order_id  | product_name  | revenue | order_segment  |
    |      1001 | Áo thun       |  300000 | Đơn nhỏ        |
    |      1002 | Giày thể thao |  800000 | Đơn lớn        |
    |      1003 | Túi xách      |  450000 | Đơn vừa        |
@@ -1200,3 +1200,165 @@ VI. CASE WHEN
           ELSE 'Chưa đạt KPI'
        END
        + Đang phân loại kết quả của từng nhóm, không phải doanh thu của từng dòng
+
+ 14. Một số lỗi thường gặp
+     1. Lỗi 1: Quên END
+        - Sai:
+          CASE
+             WHEN revenue >= 700000 THEN 'Đơn lớn'
+             ELSE 'Đơn nhỏ'
+
+        - Đúng:
+          CASE
+             WHEN revenue >= 700000 THEN 'Đơn lớn'
+             ELSE 'Đơn nhỏ'
+          END AS order_segment
+
+     2. Dùng = thay vì WHEN
+        - Sai:
+          CASE revenue >= 700000 THEN 'Đơn lớn'
+        - Đúng
+          CASE
+             WHEN revenue >= 700000 THEN 'Đơn lớn'
+          END
+
+     3. Lỗi 3: Đặt điều kiện rộng trước điều kiện hẹp
+        - Sai:
+          CASE
+             WHEN revenue >= 400000 THEN 'Đơn vừa'
+             WHEN revenue >= 700000 THEN 'Đơn lớn'
+        - Đúng:
+          CASE
+             WHEN revenue >= 700000 THEN 'Đơn lớn'
+             WHEN revenue >= 400000 THEN 'Đơn vừa'
+             ELSE 'Đơn nhỏ'
+          END
+
+     4. Lỗi 4: Nhầm CASE WHEN với WHERE
+        - CASE WHEN không tự động loại bỏ dòng
+          CASE
+             WHEN revenue >= 700000 THEN 'Đơn lớn'
+             ELSE 'Đơn nhỏ'
+          END
+          -> Nó chỉ tạo nhãn cho từng dòng
+
+ 15. Bài tập
+     Dùng bảng orders
+     1. Bài 31: Tạo cột order_segment để phân loại
+        - Đơn lớn nếu revenue >= 700000
+        - Đơn vừa nếu revenue >= 400000
+        - Đơn nhỏ nếu thấp hơn 400000
+      Hiển thị:       
+        - order_id
+        - revenue
+        - order_segment
+       
+         SELECT
+            order_id,
+            revenue,
+            CASE
+              WHEN revenue >= 700000 THEN 'Đơn lớn'
+              WHEN revenue >= 400000 THEN 'Đơn vừa'
+              ELSE 'Đơn nhỏ'
+            END AS order_segment
+        FROM orders
+       
+     3. Bài 32:
+        Tạo cột quantity_segment để phân loại:
+           - Số lượng cao nếu qunatity >= 3
+           - Số lượng vừa nếu quantity = 2
+           - Số lượng thấp nếu quantity < 2
+       
+               SELECT
+                  order_id,
+                  quantity,
+                  CASE
+                     WHEN quantity >= 3 THEN 'Số lượng cao'
+                     WHEN quantity = 2 THEN 'Số lượng vừa'
+                     ELSE 'Số lượng thấp'
+                  END AS quantity_segment
+                FROM orders
+             
+     4. Bài 33:
+        Phân loại kênh khách hàng:
+           - Kênh sở hữu nếu là Website
+           - Sàn thương mại điện tử nếu là Shopee hoặc Tiktok Shop
+           - Kênh khác trong các trường hợp còn lại
+       Hiển thị:
+           - channel
+           - Cột phân loại mới
+       
+              SELECT
+                 order_id,
+                 channel
+                 CASE
+                   WHEN channel = 'Website' THEN 'Kênh sở hữu'
+                   WHEN channel = 'Shopee'
+                     OR channel = 'Tiktok Shop'
+                   THEN 'Sàn thương mại điện tử'
+                   ELSE 'Kênh khác'
+                 END AS channel_segment
+             FROM orders
+       
+     5. Bài 34:
+        Tính số đơn hàng lớn:
+          Đơn lớn là đơn có revenue >= 700000
+             SELECT 
+                SUM(
+                  CASE revenue >= 700000 THEN 1
+                  ELSE 0
+                END
+                ) AS order_large_quantity
+             FROM orders;
+
+     7. Bài 35: Tính tổng doanh thu của các đơn hàng lớn
+          SELECT
+            order_id,
+            SUM(revenue) AS total_revenue
+            CASE
+               WHEN revenue >= 700000 THEN 'Đơn lớn'
+               ELSE 'Đơn nhỏ'
+            END AS total_revenue_large
+          FROM orders;
+
+     9. Bài 36:
+        Giải thích sự khác nhau giữa hai câu lệnh:
+           SELECT *
+           FROM orders
+           WHERE revenue >= 700000;
+        và:
+           SELECT
+              order_id,
+              revenue,
+              CASE
+                 WHEN revenue > 700000 THEN 'Đơn lớn'
+                 ELSE 'Đơn không lớn'
+              END AS order_type
+           FROM orders;
+
+          - Câu lệnh đầu tiên: Hiển thị các đơn hàng có doanh thu từ 700000 trở lên
+          - Câu lệnh thứ 2: Phân loại các đơn hàng, nếu đơn hàng nào có doanh thu từ 700000 trở là 'Đơn lớn', còn lại là 'Đơn không lớn'
+       
+
+     10. Bài 37
+        Phát hiện lỗi trong câu SQL
+           SELECT
+              order_id
+              revenue,
+              CASE
+                 WHEN revenue >= 400000 THEN 'Đơn vừa'
+                 WHEN revenue >= 700000 THEN 'Đơn lớn'
+              AS order_segment
+           FROM orders;
+        Hãy chỉ ra ít nhất hai lỗi và viết lại câu đúng
+          - Lỗi số 1: Điều kiện rộng trước điều kiện hẹp (đơn vừa trước đơn lớn)
+          - Lỗi số 2: không có END kết thúc câu lệnh CASE
+          - Viết lại đúng
+                 SELECT
+                    order_id
+                    revenue,
+                    CASE
+                       WHEN revenue >= 700000 THEN 'Đơn lớn'
+                       WHEN revenue >= 400000 THEN 'Đơn vừa'
+                    END AS order_segment
+                 FROM orders;
